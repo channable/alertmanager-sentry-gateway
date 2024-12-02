@@ -360,7 +360,15 @@ func worker(
 		if client == nil {
 			sentryOptions := sentry.ClientOptions{
 				Dsn:         dsn,
-				Environment: env}
+				Environment: env,
+				// Turn off all default integrations: the information in Sentry should only contain whatever
+				// Alertmanager sent to the gateway and not e.g. what hostname the Sentry gateway is running on
+				// (potentially confusing) or what version of Go the gateway was built with (useless).
+				// Snippet from https://docs.sentry.io/platforms/go/integrations/#default-integrations.
+				Integrations: func(i []sentry.Integration) []sentry.Integration {
+					return []sentry.Integration{}
+				},
+			}
 			if newClient, err := sentry.NewClient(sentryOptions); err == nil {
 				sentryClients[clientKey] = newClient
 				client = newClient
