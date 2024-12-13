@@ -305,6 +305,8 @@ func getEventAlertLevel(alert amtemplate.Alert) sentry.Level {
 	for _, label := range alert.Labels.SortedPairs() {
 		if label.Name == "severity" {
 			switch label.Value {
+			case "log":
+				return sentry.LevelInfo
 			case "info":
 				return sentry.LevelInfo
 			case "warning":
