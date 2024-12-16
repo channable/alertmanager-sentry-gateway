@@ -44,6 +44,7 @@ func main() {
 	cmd.Flags().StringP("sentry-url", "u", "", "Sentry URL")
 	cmd.Flags().StringP("environment", "e", "", "Sentry Environment")
 	cmd.Flags().StringP("environment-label", "l", "", "Alert Label that contains sentry environment")
+	cmd.Flags().StringP("project-label-mapping", "p", "", "JSON mapping of sentry_project to DSN")
 	cmd.Flags().StringP("template", "t", "", "Path of the template file of event message")
 	cmd.Flags().StringArrayP("fingerprint-templates", "f", []string{}, "List of templates to use as Sentry event fingerprint")
 	cmd.Flags().BoolP("dumb-timestamps", "s", false, "Whether to use time.Now instead of alert StartsAt/EndsAt")
@@ -193,6 +194,25 @@ func run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	var projectLabelToDSN map[string]interface{}
+	labelMapPath, err := cmd.Flags().GetString("project-label-mapping")
+	if err != nil {
+		return err
+	}
+
+	if labelMapPath != "" {
+		file, err := ioutil.ReadFile(labelMapPath)
+		if err != nil {
+			return err
+		}
+
+		err = json.Unmarshal(file, &projectLabelToDSN)
+
+		if err != nil {
+			return err
+		}
+	}
+
 	hookChan := make(chan gatewayRequest)
 
 	mux := http.NewServeMux()
@@ -233,6 +253,12 @@ func run(cmd *cobra.Command, args []string) error {
 				if e != "" {
 					alert_env = e
 					log.Infof("Extracted sentry env: %s from alert: %s", alert_env, alert.Labels["alertname"])
+				}
+			}
+
+			if projectLabel := alert.Labels["sentry_project"]; projectLabel != "" {
+				if newDSN := projectLabelToDSN[projectLabel].(string); newDSN != "" {
+					dsn = newDSN
 				}
 			}
 			hookChan <- gatewayRequest{dsn, alert_env, alert}
