@@ -257,8 +257,9 @@ func run(cmd *cobra.Command, args []string) error {
 			}
 
 			if projectLabel := alert.Labels["sentry_project"]; projectLabel != "" {
-				if newDSN := projectLabelToDSN[projectLabel].(string); newDSN != "" {
-					dsn = newDSN
+				newDSN := projectLabelToDSN[projectLabel]
+				if newDSN != nil && newDSN.(string) != "" {
+					dsn = newDSN.(string)
 				}
 			}
 			hookChan <- gatewayRequest{dsn, alert_env, alert}
