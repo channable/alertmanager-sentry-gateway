@@ -63,6 +63,18 @@ You have alert with label `my-label` which has value `my-sentry-environment`.
 Then you specify it like so: `--environment-label=my-label` and if alert coming in has this label, it will set sentry environment for that alert equal to the value of that label.  
 This overwrites any existing sentry environment which was set via URL or `--environment` argument. So that allows to ingest alerts that might not have that label, in that case they will use sentry environment from previous methods.
 
+### Sentry project from alert label
+This fork of alertmanager-sentry-gateway allows overriding the Sentry project an alert is delivered to based on the `sentry_project` label.
+To use this feature, define a JSON file mapping label values to DSNs like the following:
+
+```json
+{
+    "some-project": "https://...",
+    "another-project": "https://..."
+}
+```
+
+Then, pass the location of this file via the `--project-label-mapping` option (e.g. `--project-label-mapping mymapping.json`).
 
 ### Event body
 Event body of Sentry can be customized with a template file as follows. The data passed to the template file is an [Alert](https://godoc.org/github.com/prometheus/alertmanager/template#Alert) of Alertmanager.
